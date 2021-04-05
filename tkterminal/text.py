@@ -1,3 +1,18 @@
+#                    Copyright 2021 Saad Mairaj
+
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+
+#        http://www.apache.org/licenses/LICENSE-2.0
+
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+
 import tkinter as tk
 from tkterminal.utils import _bind
 
@@ -77,7 +92,7 @@ class LineNumberBar(tk.Canvas):
                 args[0:2] == ("yview", "scroll")):
             self._text.event_generate("<<Change>>", when="tail")
         return result
-    
+
     def trigger_change_event(self):
         """Call <<Change>> event manually in case event 
         is not triggered in special cases."""
@@ -138,10 +153,11 @@ class LineNumberBar(tk.Canvas):
         """Internal function."""
         if not setit:
             _bind(self._text,
-                dict(className='on_configure', sequence="<Configure>"),
-                dict(className='on_change_redraw', sequence="<<Change>>"),
-                dict(className='on_change_insert', sequence="<<Change>>"))
-            if not reset: return
+                  dict(className='on_configure', sequence="<Configure>"),
+                  dict(className='on_change_redraw', sequence="<<Change>>"),
+                  dict(className='on_change_insert', sequence="<<Change>>"))
+            if not reset:
+                return
 
         _bind(self._text,
               dict(className='on_configure',
@@ -153,15 +169,13 @@ class LineNumberBar(tk.Canvas):
 
     def destroy(self):
         if self._text and self._text.winfo_exists():
-            _bind(self._text,
-                  dict(className='on_configure', sequence="<Configure>"),
-                  dict(className='on_change_redraw', sequence="<<Change>>"),
-                  dict(className='on_change_insert', sequence="<<Change>>")
-                  )
+            self._binds(False)
         return super().destroy()
 
 
 class Text(tk.Text):
+    """Text widget with linebar functionality."""
+
     def __init__(self, master=None, **kw):
         self.frame = tk.Frame(master)
         tk.Text.__init__(self, self.frame, **kw)
