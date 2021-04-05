@@ -3,8 +3,8 @@
 This library gives Terminal widget support to the Tkinter library. Perform almost all the operations of a terminal with tkterminal.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Saadmairaj/tkterminal/master/assets/demo_dark.png?token=ALAV6GGSD27LTXZCGVYTWV3ANNY2A" width=700/>
-  <img src="https://raw.githubusercontent.com/Saadmairaj/tkterminal/master/assets/demo_light.png?token=ALAV6GEWT65ZB3R53NWHJKDANNY3E" width=700/>
+  <img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/demo_dark.png?raw=true" width=700/>
+  <img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/demo_light.png?raw=true" width=700/>
 </p>
 
 
@@ -42,7 +42,7 @@ terminal.pack(expand=True, fill='both')
 root.mainloop()
 ```
 
-<p align="center"><img src="https://raw.githubusercontent.com/Saadmairaj/tkterminal/master/assets/demo1.gif?token=ALAV6GFFNHN5WZG46ZTTHVTANNZDG"/></p>
+<p align="center"><img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/demo1.gif?raw=true"/></p>
 
 - Enable shell (**`shell=True`**)
 
@@ -67,7 +67,7 @@ root.mainloop()
   ```
   
   <p align="center">
-    <img src="https://raw.githubusercontent.com/Saadmairaj/tkterminal/master/assets/linebar.png?token=ALAV6GGG7S7W36JXCNBZW4DANNZEQ" width=700/>
+    <img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/linebar.png?raw=true" width=700/>
   </p>
 
 - Command that requires input.
