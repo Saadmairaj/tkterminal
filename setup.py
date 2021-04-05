@@ -1,11 +1,20 @@
 from setuptools import setup, find_packages
 
 
+def get_long_description(path):
+    """Opens and fetches text of long descrition file."""
+    with open(path, 'r') as f:
+        text = f.read()
+    return text
+
+
 attrs = dict(
     name='tkterminal',
     version='0.1.0.b1',
     packages=find_packages(),
+    long_description=get_long_description('README.md'),
     description='Terminal widget for Tkinter library.',
+    long_description_content_type='text/markdown',
     author='Saad Mairaj',
     author_email='Saadmairaj@yahoo.in',
     url='https://github.com/Saadmairaj/tkterminal',
