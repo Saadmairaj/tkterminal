@@ -1,4 +1,19 @@
-from tkterminal.utils import _bind, threaded
+#                    Copyright 2021 Saad Mairaj
+
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+
+#        http://www.apache.org/licenses/LICENSE-2.0
+
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
+
+from tkterminal.utils import threaded
 from tkterminal.text import Text, TextIndex
 from subprocess import PIPE, Popen
 import tempfile
@@ -15,22 +30,17 @@ class _TerminalFunctionality:
 
     def _set_basename(self, insert_newline=False):
         """Internal function"""
-        if self.index('end-1l').row != self.index('insert').row:
+        if (self.get('end-2c') == '\\'
+                or self.get('end-1l', 'end-1c') == '> '
+                or self.index('end-1l').row != self.index('insert').row):
             return "break"
         if insert_newline:
             self.insert('end', '\n')
         self.insert('end', self._basename)
         self.tag_add('basename', 'end-1l', 'end-1c')
         self.see('end')
-        self.event_generate("<<Change>>", when="tail")
-
-    def _create_propreties(self):
-        """Internal function"""
-        options = self.config()
-        for op in options:
-            print(op)
-            pr = property(lambda op=op: op)
-            pr.setter(lambda val, op=op: self.config({op: val}))
+        self._limit_backspace = len(self._basename)
+        self.linebar.trigger_change_event()
 
     def _get_commands(self):
         """Internal function"""
@@ -57,7 +67,7 @@ class _TerminalFunctionality:
             cmd = cmd.replace(f"<input>{_input}</input>", "")
         cmd = cmd.replace("> ", "") if ln > 1 else cmd
         if cmd and cmd[-1] == '\\' or add_more:
-            return
+            return None, None
         return cmd, _input
 
     def _update_output_line(self, tag, line, update=False):
@@ -79,7 +89,6 @@ class _TerminalFunctionality:
         cmd, _inp = self._get_commands()
         if _input is None and _inp:
             _input = _inp
-        print(_input)
         if _cmd is not None:
             self.insert("end-1c", _cmd)
             cmd = _cmd
@@ -112,14 +121,13 @@ class _TerminalFunctionality:
 
     def _set_initials(self, evt=None):
         """Internal function"""
-        if (self._ignore_keypress(None)
-                and self.index('insert') != self.index('end-1c')):
-            return "break"
         if (self.get('end-2c') == '\\'
                 or self.get('end-1l', 'end-1c') == '> '):
+            index = "end-1c" if self.get('end-2c') == '\\' else "end"
+            self.insert(index, '\n')
+            self.insert('end', '> ')
             self._limit_backspace = 2
-            self.after(MS_DELAY, lambda: self.insert('end', '> '))
-            return True
+            return False
         if not self._get_commands()[0]:
             self._limit_backspace = len(self._basename)
             return True
@@ -127,15 +135,14 @@ class _TerminalFunctionality:
     def _ignore_keypress(self, evt=None):
         """Internal function"""
         insert_idx = self.index('insert')
-        if (insert_idx.column <= self._limit_backspace
-                or insert_idx != self.index('end-1c')):
+        if (insert_idx.column < self._limit_backspace):
             return "break"
 
     def _on_return(self, evt=None):
         """Internal function.
 
         Event callback on return key press."""
-        self._set_initials(evt)
+        self._set_initials()
         self._run_on_return(evt)
         return 'break'
 
@@ -143,19 +150,24 @@ class _TerminalFunctionality:
         """Internal function.
 
         Event callback on any keybroad key press."""
-        insert_idx = self.index('insert')
-        if (insert_idx.column < self._limit_backspace
-            or (evt.keysym not in ALLOWED_KEYSYM
-                and insert_idx.row != self.index('end-1l').row)
-                or (evt.state == 8 and evt.keysym == 'v'
-                    and insert_idx.row != self.index('end-1l').row)):
+        last_line = self.get('end-1l', 'end-1c')
+        if ((self._ignore_keypress(evt)
+                and len(last_line) >= 2 and last_line[:2] == '> ')
+                or (evt.keysym not in ALLOWED_KEYSYM
+                and self.index('insert').row != self.index('end-1l').row)
+                # or (evt.state == 8 and evt.keysym == 'v'
+                #     and insert_idx.row != self.index('end-1l').row)
+                ):
             return "break"
 
     def _on_backspace(self, evt=None):
         """Internal function.
 
         Event callback on backspace key press."""
-        return self._ignore_keypress(evt)
+        insert_idx = self.index('insert')
+        if (insert_idx.column <= self._limit_backspace
+                or insert_idx.row != self.index('end-1c').row):
+            return "break"
 
     def _on_cut(self, evt=None):
         """Internal function.
@@ -171,7 +183,31 @@ class _TerminalFunctionality:
 
 
 class Terminal(Text, _TerminalFunctionality):
+    """Ternimal widget."""
+
     def __init__(self, *ags, **kw):
+        """Construct a ternimal widget with the parent MASTER.
+
+        STANDARD OPTIONS
+
+            background, borderwidth, cursor,
+            exportselection, font, foreground,
+            highlightbackground, highlightcolor,
+            highlightthickness, insertbackground,
+            insertborderwidth, insertofftime,
+            insertontime, insertwidth, padx, pady,
+            relief, selectbackground,
+            selectborderwidth, selectforeground,
+            setgrid, takefocus,
+            xscrollcommand, yscrollcommand,
+
+        WIDGET-SPECIFIC OPTIONS
+
+            autoseparators, height, maxundo,
+            spacing1, spacing2, spacing3,
+            state, tabs, undo, width, wrap,
+
+        """
         kw['highlightthickness'] = kw.get('highlightthickness', 0)
         super().__init__(*ags, **kw)
         self.shell = False
@@ -186,28 +222,20 @@ class Terminal(Text, _TerminalFunctionality):
         self.bind("<KeyPress>", self._on_keypress, True)
         self.bind('<BackSpace>', self._on_backspace, True)
 
-        # (issue) _bind not working.
-        # _bind(self,
-        #     dict(className="on_keypress", sequence="<KeyPress>", func=self._on_keypress),
-        #     dict(className="on_return", sequence="<Return>", func=self._on_return),
-        #     dict(className="on_backspace", sequence="<BackSpace>", func=self._on_backspace),
-        #     # dict(className="Cut", sequence="<<Cut>>", func=self._on_cut),
-        #     )
-
         self.tag_config('basename', foreground='pink')
         self.tag_config('error', foreground='red')
         self.tag_config('output', foreground='darkgrey')
-        self.tag_config('command')  # edit later
 
-        self.insert(1.0, self._basename)
-        self.tag_add('basename', 1.0, 'end-1c')
+        self._set_basename()
 
     @property
     def basename(self):
+        """Returns the basename."""
         return self.basename
 
     @basename.setter
     def basename(self, val):
+        """Change the basename of the terminal."""
         if not val.endswith(' '):
             val += ' '
         for i in self.tag_ranges('basename'):
@@ -222,8 +250,17 @@ class Terminal(Text, _TerminalFunctionality):
                 self.tag_add('basename', start_index, end_index)
         self._basename = val
 
-    @property
+    def clear(self):
+        """Clear the console."""
+        self.delete('1.0', 'end')
+        self._set_basename()
+
     def get_output(self):
+        """Get output from the recent command. 
+
+        Returns None if no command has run else 
+        the function will return a dictionary 
+        of error and output."""
         if self._out or self._err:
             return {
                 "error": self._err,
