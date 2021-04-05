@@ -2,6 +2,12 @@
 
 This library gives Terminal widget support to the Tkinter library. Perform almost all the operations of a terminal with tkterminal.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Saadmairaj/tkterminal/master/assets/demo_dark.png?token=ALAV6GGSD27LTXZCGVYTWV3ANNY2A" width=700/>
+  <img src="https://raw.githubusercontent.com/Saadmairaj/tkterminal/master/assets/demo_light.png?token=ALAV6GEWT65ZB3R53NWHJKDANNY3E" width=700/>
+</p>
+
+
 ## Installation
 
 Use the package manager pip to install with the following command:
@@ -36,6 +42,8 @@ terminal.pack(expand=True, fill='both')
 root.mainloop()
 ```
 
+<p align="center"><img src="https://raw.githubusercontent.com/Saadmairaj/tkterminal/master/assets/demo1.gif?token=ALAV6GFFNHN5WZG46ZTTHVTANNZDG"/></p>
+
 - Enable shell (**`shell=True`**)
 
   If the shell is True, the specified command will be executed through the shell. This can be useful if you are using Python primarily for the enhanced control flow it offers over most system shells and still want convenient access to other shell features such as shell _pipes_, _filename wildcards_, _environment variable expansion_, and _expansion of ~ to a user’s home directory_. However, note that Python itself offers implementations of many shell-like features (in particular, `glob`, `fnmatch`, `os.walk()`, `os.path.expandvars()`, `os.path.expanduser()`, and `shutil`).
@@ -57,8 +65,12 @@ root.mainloop()
   terminal = Terminal()
   terminal.linebar = True
   ```
+  
+  <p align="center">
+    <img src="https://raw.githubusercontent.com/Saadmairaj/tkterminal/master/assets/linebar.png?token=ALAV6GGG7S7W36JXCNBZW4DANNZEQ" width=700/>
+  </p>
 
-- Command with that requires input.
+- Command that requires input.
 
   The tkterminal is using subprocess python module where the input can only be passed before running the command and cannot be passed after the command has ran. So the input can be pass with methods:
 
