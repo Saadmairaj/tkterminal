@@ -7,7 +7,6 @@ This library gives Terminal widget support to the Tkinter library. Perform almos
   <img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/demo_light.png?raw=true" width=700/>
 </p>
 
-
 ## Installation
 
 Use the package manager pip to install with the following command:
@@ -65,7 +64,7 @@ root.mainloop()
   terminal = Terminal()
   terminal.linebar = True
   ```
-  
+
   <p align="center">
     <img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/linebar.png?raw=true" width=700/>
   </p>
@@ -165,3 +164,4 @@ Terminal widget is created from the Tkinter Text widget class that makes it supp
   - All output text have tag name _output_ which can be configured with `terminal.tag_config("output", option=value...)` method.
   - All error text also have a tag name _error_ which can be configured with `terminal.tag_config("error", option=value...)` method.
   - The basename also have a tag name _basename_ configured with `terminal.tag_config("basename", option=value...)` method.
+  - The linebar is an object of Tkinter Canvas widget which can be configured with `terminal.linebar.configure(option=value ...)`. And each number line is a canvas item whose tag name is the number itself that can be configured with `terminal.linebar.itemconfigure('item', options...)`.
