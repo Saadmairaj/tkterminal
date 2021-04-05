@@ -10,9 +10,9 @@ class TextIndex(str):
 
         The class give flexibility in getting row, 
         column values separate from index."""
-        self._index = index
+        self._index = str(index)
         self._row, self._col = (None, None)
-        if index != "None":
+        if self._index != "None":
             self._row, self._col = self._index.split('.')
 
     @property
@@ -77,6 +77,11 @@ class LineNumberBar(tk.Canvas):
                 args[0:2] == ("yview", "scroll")):
             self._text.event_generate("<<Change>>", when="tail")
         return result
+    
+    def trigger_change_event(self):
+        """Call <<Change>> event manually in case event 
+        is not triggered in special cases."""
+        return self._text.event_generate("<<Change>>", when="tail")
 
     def _redraw(self, *args):
         """Internal function."""
@@ -131,13 +136,13 @@ class LineNumberBar(tk.Canvas):
 
     def _binds(self, setit, reset=False):
         """Internal function."""
-        if reset or not setit:
-            return _bind(self._text,
-                         dict(className='on_configure',
-                              sequence="<Configure>"),
-                         dict(className='on_change_redraw',
-                              sequence="<<Change>>"),
-                         dict(className='on_change_insert', sequence="<<Change>>"))
+        if not setit:
+            _bind(self._text,
+                dict(className='on_configure', sequence="<Configure>"),
+                dict(className='on_change_redraw', sequence="<<Change>>"),
+                dict(className='on_change_insert', sequence="<<Change>>"))
+            if not reset: return
+
         _bind(self._text,
               dict(className='on_configure',
                    sequence="<Configure>", func=self._redraw),
