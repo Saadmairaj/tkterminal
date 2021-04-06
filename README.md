@@ -1,5 +1,9 @@
 # tkterminal
 
+[![CodeFactor](https://www.codefactor.io/repository/github/saadmairaj/tkterminal/badge)](https://www.codefactor.io/repository/github/saadmairaj/tkterminal)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FSaadmairaj%2Ftkterminal.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2FSaadmairaj%2Ftkterminal?ref=badge_small)
+![Platform](https://img.shields.io/powershellgallery/p/Pester?color=blue)
+
 This library gives Terminal widget support to the Tkinter library. Perform almost all the operations of a terminal with tkterminal.
 
 <p align="center">
