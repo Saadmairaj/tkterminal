@@ -124,7 +124,7 @@ class LineNumberBar(tk.Canvas):
         # Made this a year ago (not the best approach)
         # NEED IMPROVEMENTS.
         def select(line):
-            if self.previous_ln != None:
+            if self.previous_ln is not None:
                 self.itemconfigure(
                     self.previous_ln, fill=self._text['foreground'])
             self.itemconfigure(ln, fill=self._text['selectbackground'])
