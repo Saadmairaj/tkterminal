@@ -3,8 +3,8 @@
 This library gives Terminal widget support to the Tkinter library. Perform almost all the operations of a terminal with tkterminal.
 
 <p align="center">
-  <img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/demo_dark.png?raw=true" width=700/>
-  <img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/demo_light.png?raw=true" width=700/>
+  <img width="600" alt="demo_dark" src="https://user-images.githubusercontent.com/46227224/113672526-8811cb00-96d5-11eb-8527-5f8c559482fc.png">
+  <img width="600" alt="demo_light" src="https://user-images.githubusercontent.com/46227224/113672749-bf807780-96d5-11eb-801e-c60edcc72672.png">
 </p>
 
 ## Installation
@@ -41,7 +41,9 @@ terminal.pack(expand=True, fill='both')
 root.mainloop()
 ```
 
-<p align="center"><img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/demo1.gif?raw=true"/></p>
+  <p align="center">
+    <img src="https://user-images.githubusercontent.com/46227224/113672865-e2129080-96d5-11eb-8152-f043f0ed2fa8.gif"/>
+  </p>
 
 - Enable shell (**`shell=True`**)
 
@@ -66,7 +68,7 @@ root.mainloop()
   ```
 
   <p align="center">
-    <img src="https://github.com/Saadmairaj/tkterminal/blob/master/assets/linebar.png?raw=true" width=700/>
+    <img width="700" alt="linebar" src="https://user-images.githubusercontent.com/46227224/113672881-e474ea80-96d5-11eb-933a-56a0a0af9948.png">
   </p>
 
 - Command that requires input.
