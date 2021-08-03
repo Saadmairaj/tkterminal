@@ -105,9 +105,9 @@ class _TerminalFunctionality:
 
         if cmd is None or cmd == '':
             return self._set_basename(True)
-        elif cmd == 'clear':
+        if cmd == 'clear':
             return self._clear()
-        elif cmd.startswith('cd'):
+        if cmd.startswith('cd'):
             wd = os.getcwd()
             os.chdir(self._cwd)
             path = cmd.split()
