@@ -13,13 +13,15 @@
 #    limitations under the License.
 
 
+import os
 from tkterminal.utils import threaded
 from tkterminal.text import Text, TextIndex
 from subprocess import PIPE, Popen
 import tempfile
 
 
-ALLOWED_KEYSYM = ('Left', 'Right', 'Up', 'Down')
+ALLOWED_KEYSYM = ('Left', 'Right')
+AVOID_KEYSYM = ('Up', 'Down')
 ALLOWED_STATE = ('Shift', 'Lock', 'Control', 'Mod1',
                  'Mod2', 'Mod3', 'Mod4', 'Mod5')
 MS_DELAY = 1
@@ -37,16 +39,16 @@ class _TerminalFunctionality:
         if insert_newline:
             self.insert('end', '\n')
         self.insert('end', self._basename)
-        self.tag_add('basename', 'end-1l', 'end-1c')
+        self.tag_add('basename', 'end-1l', 'end-2c')
         self.see('end')
         self._limit_backspace = len(self._basename)
         self.linebar.trigger_change_event()
 
-    def _get_commands(self):
+    def _get_commands(self, _cmd=None, _input=None):
         """Internal function"""
 
         def initial_index(ln):
-            """Internal function."""
+            """Internal function"""
             index_col = 0
             base_index = (
                 str(self.index(f'end-{ln}l').row) +
@@ -56,13 +58,21 @@ class _TerminalFunctionality:
             return str(max((self.index(f'end-{ln}l').row), 1)) + '.%s' % index_col
 
         ln = 1
-        _input = None
-        cmd = self.get(initial_index(ln), 'end-1c')
+        cmd = _cmd or self.get(initial_index(ln), 'end-1c')
+
+        if cmd.strip() == '':
+            return None, None
+
+        self._commands_list.append(cmd)
+
+        if _input is not None:
+            return cmd, _input
+
         add_more = self.get('end-1l', 'end-1c') == '> '
         while cmd[:2] == '> ':
             ln += 1
             cmd = self.get(initial_index(ln), 'end-1c')
-        if cmd.find("<input>"):
+        if cmd.find("<input>") != -1:
             _input = cmd.split('<input>')[-1].split('</input>')[0]
             cmd = cmd.replace(f"<input>{_input}</input>", "")
         cmd = cmd.replace("> ", "") if ln > 1 else cmd
@@ -80,20 +90,35 @@ class _TerminalFunctionality:
             self.update()
         self['state'] = "disabled"
         self.see('end')
+        self.mark_set('insert', 'end')
 
-    # UPDATE: threading is working,
-        # Need more stable method.
     @threaded
     def _run_on_return(self, evt=None, _cmd=None, _input=None):
         """Internal function"""
-        cmd, _inp = self._get_commands()
-        if _input is None and _inp:
-            _input = _inp
+        # Setting command and input
+        self._terminated = False
+        cmd, _input = self._get_commands(_cmd, _input)
         if _cmd is not None:
             self.insert("end-1c", _cmd)
-            cmd = _cmd
+
+        self._prev_cmd_pointer = -1
+
         if cmd is None or cmd == '':
             return self._set_basename(True)
+        elif cmd == 'clear':
+            return self._clear()
+        elif cmd.startswith('cd'):
+            wd = os.getcwd()
+            os.chdir(self._cwd)
+            path = cmd.split()
+            if len(path) > 1:
+                path = path[1]
+                if path.startswith('~'):
+                    path = os.path.expanduser(path)
+                path = os.path.abspath(path)
+                if os.path.exists(path):
+                    self._cwd = path
+            os.chdir(wd)
 
         stdin = PIPE
         _original_state = self['state']
@@ -101,23 +126,26 @@ class _TerminalFunctionality:
         self.insert('end', '\n')
         self['state'] = 'disable'
 
-        if _input:
+        if _input is not None:
             stdin = tempfile.TemporaryFile()
             stdin.write(_input.encode())
             stdin.seek(0)
+
         with Popen(cmd, stdout=PIPE, stderr=PIPE, stdin=stdin,
                    bufsize=1, universal_newlines=True,
-                   shell=self.shell) as p:
-            for line in p.stdout:
+                   shell=self.shell, cwd=self._cwd) as self._popen:
+            for line in self._popen.stdout:
                 self._out += line
                 self._update_output_line('output', line, True)
-            for line in p.stderr:
+            for line in self._popen.stderr:
                 self._err += line
                 self._update_output_line('error', line, True)
         self['state'] = _original_state
-        if _input:
+
+        if _input is not None:
             stdin.close()
-        self._set_basename(True)
+
+        self._set_basename(self._terminated)
 
     def _set_initials(self, evt=None):
         """Internal function"""
@@ -135,7 +163,9 @@ class _TerminalFunctionality:
     def _ignore_keypress(self, evt=None):
         """Internal function"""
         insert_idx = self.index('insert')
-        if (insert_idx.column < self._limit_backspace):
+
+        if (insert_idx.column < self._limit_backspace
+                or 'basename' in self.tag_names(insert_idx)):
             return "break"
 
     def _on_return(self, evt=None):
@@ -150,14 +180,17 @@ class _TerminalFunctionality:
         """Internal function.
 
         Event callback on any keybroad key press."""
-        last_line = self.get('end-1l', 'end-1c')
-        if ((self._ignore_keypress(evt)
-                and len(last_line) >= 2 and last_line[:2] == '> ')
-                or (evt.keysym not in ALLOWED_KEYSYM
-                and self.index('insert').row != self.index('end-1l').row)
-                # or (evt.state == 8 and evt.keysym == 'v'
-                #     and insert_idx.row != self.index('end-1l').row)
-                ):
+        insert_idx = self.index('insert')
+
+        if (self._ignore_keypress(evt)  # Avoid typing on basename and spacer
+            or (insert_idx.column <= self._limit_backspace
+                        and evt.keysym == 'Left')  # Avoid to get on basename and spacer
+            # or (evt.keysym in AVOID_KEYSYM) # break if keysym not allowed
+                    or (evt.keysym not in ALLOWED_KEYSYM
+                        and insert_idx.row != self.index('end-1l').row)
+                    or (evt.state == 8 and evt.keysym == 'v'
+                        and insert_idx.row != self.index('end-1l').row)  # Allowing pasting
+            ):
             return "break"
 
     def _on_backspace(self, evt=None):
@@ -168,6 +201,20 @@ class _TerminalFunctionality:
         if (insert_idx.column <= self._limit_backspace
                 or insert_idx.row != self.index('end-1c').row):
             return "break"
+
+    def _reset(self, evt=None):
+        """Internal function.
+
+        Resets terminal and values"""
+        self._clear()
+        self._commands_list.clear()
+
+    def _clear(self, evt=None):
+        """Internal function
+
+        Clear the terminal window"""
+        self.delete("0.1", "end")
+        return self._set_basename()
 
     def _on_cut(self, evt=None):
         """Internal function.
@@ -180,6 +227,61 @@ class _TerminalFunctionality:
 
         Event "paste" callback."""
         return self._ignore_keypress(evt)
+
+    def _on_click(self, evt=None):
+        """Internal function.
+
+        Event triggers on mouse clicks"""
+        self._click_insert_index = self.index("insert")
+
+    def _on_click_release(self, evt=None):
+        """Internal function.
+
+        Event triggers on mouse clicks Release"""
+        self.mark_set("insert", self._click_insert_index)
+        return "break"
+
+    def _load_previous(self, evt=None):
+        """Internal function
+
+        Loads any od the previous command"""
+        if evt.keysym not in AVOID_KEYSYM:
+            return
+
+        if getattr(self, '_prev_cmd_pointer', None) is None:
+            self._prev_cmd_pointer = -1
+
+        if evt.keysym == 'Up' and self._commands_list:
+            index = len(self._commands_list) - 1
+            self._prev_cmd_pointer -= 1
+            self._prev_cmd_pointer = max(-index, self._prev_cmd_pointer)
+        elif evt.keysym == 'Down' and self._commands_list:
+            self._prev_cmd_pointer += 1
+            self._prev_cmd_pointer = min(0, self._prev_cmd_pointer)
+        elif not self._commands_list:
+            return "break"
+
+        # clears the last line
+        last_line_start = TextIndex(self.index("end-1l"))
+        last_line_start = TextIndex(
+            str(last_line_start.line) + '.' + str(len(self.basename) + 1)
+        )
+        last_line_end = TextIndex(self.index("end"))
+
+        self.delete(last_line_start, last_line_end)
+        if self._prev_cmd_pointer != 0:
+            self.insert('end', self._commands_list[self._prev_cmd_pointer])
+
+        return "break"
+
+    def _cancel(self, evt=None):
+        """Internal function
+
+        Cancels ongoing execution"""
+        if (getattr(self, '_popen', None) is not None
+                and self._popen.poll() is None):
+            self._popen.terminate()
+            self._terminated = True
 
 
 class Terminal(Text, _TerminalFunctionality):
@@ -210,17 +312,29 @@ class Terminal(Text, _TerminalFunctionality):
         """
         kw['highlightthickness'] = kw.get('highlightthickness', 0)
         super().__init__(*ags, **kw)
-        self.shell = False
-        self._basename = "tkterminal$ "
-        self._limit_backspace = 0
+
+        self._cwd = os.getcwd()
+        self._basename = ''
         self._limit_backspace = len(self._basename)
+        self._commands_list = []
+
+        self.shell = False
+        self.basename = "tkterminal$"
 
         self.bind("<<Cut>>", self._on_cut, True)
         self.bind("<<Paste>>", self._on_paste, True)
 
         self.bind("<Return>", self._on_return, True)
         self.bind("<KeyPress>", self._on_keypress, True)
+        self.bind("<KeyPress>", self._load_previous, True)
         self.bind('<BackSpace>', self._on_backspace, True)
+        self.bind('<Button-1>', self._on_click, True)
+        self.bind('<ButtonRelease-1>', self._on_click_release, True)
+        self.bind('<Button-3>', self._on_click, True)
+        self.bind('<ButtonRelease-3>', self._on_click_release, True)
+
+        self.bind('<Command-k>', self._clear, True)
+        self.bind('<Control-c>', self._cancel, True)
 
         self.tag_config('basename', foreground='pink')
         self.tag_config('error', foreground='red')
@@ -231,7 +345,7 @@ class Terminal(Text, _TerminalFunctionality):
     @property
     def basename(self):
         """Returns the basename."""
-        return self.basename
+        return self._basename.rstrip()
 
     @basename.setter
     def basename(self, val):
@@ -242,7 +356,7 @@ class Terminal(Text, _TerminalFunctionality):
             start_index = TextIndex(i)
             end_index = TextIndex(
                 str(start_index.line) + str('.') +
-                str(start_index.char+len(self._basename)))
+                str(start_index.char + len(self._basename)))
             text = self.get(start_index, end_index)
             if text == self._basename:
                 self.delete(start_index, end_index)
@@ -265,6 +379,15 @@ class Terminal(Text, _TerminalFunctionality):
             return {
                 "error": self._err,
                 "output": self._out}
+
+    def get_last_command(self):
+        """Get last command if any"""
+        if self._commands_list:
+            return self._commands_list[-1]
+
+    def get_all_commands(self):
+        """Get all the executed commands"""
+        return self._commands_list
 
     def run_command(self, cmd, give_input=None):
         """Run the command into the terminal."""
