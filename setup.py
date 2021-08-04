@@ -10,7 +10,7 @@ def get_long_description(path):
 
 attrs = dict(
     name='tkterminal',
-    version='0.1.0.b1',
+    version='0.1.0.b2',
     packages=find_packages(),
     long_description=get_long_description('README.md'),
     description='Terminal widget for Tkinter library.',
@@ -24,6 +24,9 @@ attrs = dict(
         'terminal',
         'subprocess',
         'tkinter-widget',
+        'shell',
+        'bash/sh',
+        'bash',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
