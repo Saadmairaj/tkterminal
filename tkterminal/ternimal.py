@@ -36,10 +36,11 @@ class _TerminalFunctionality:
         length for spaces allowed at insert line."""
         insert_idx = self.index("insert")
 
-        def get_initial(char): return self.get(
-            str(insert_idx.row) + '.0',
-            str(insert_idx.row) + f'.{char}'
-        )
+        def get_initial(char):
+            return self.get(
+                str(insert_idx.row) + '.0',
+                str(insert_idx.row) + f'.{char}'
+            )
 
         if get_initial(2) == "> ":
             return 2
@@ -206,7 +207,7 @@ class _TerminalFunctionality:
                         and insert_idx.row != self.index('end-1l').row)
                     or (evt.state == 8 and evt.keysym == 'v'
                         and insert_idx.row != self.index('end-1l').row)  # Allowing pasting
-                ):
+            ):
             return "break"
 
     def _on_backspace(self, evt=None):
