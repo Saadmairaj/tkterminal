@@ -35,14 +35,15 @@ class _TerminalFunctionality:
         """Internal property, returns the 
         length for spaces allowed at insert line."""
         insert_idx = self.index("insert")
-        get_initial = lambda char: self.get(
-            str(insert_idx.row) + '.0', 
+
+        def get_initial(char): return self.get(
+            str(insert_idx.row) + '.0',
             str(insert_idx.row) + f'.{char}'
-            )
+        )
 
         if get_initial(2) == "> ":
             return 2
-        
+
         if get_initial(len(self._basename)) == self._basename:
             return len(self._basename)
 
@@ -85,18 +86,18 @@ class _TerminalFunctionality:
         while cmd[:2] == '> ':
             ln += 1
             cmd = self.get(initial_index(ln), 'end-1c')
-        
+
         cmd_copy = cmd
 
         if cmd.find("<input>") != -1:
             _input = cmd.split('<input>')[-1].split('</input>')[0]
             cmd = cmd.replace(f"<input>{_input}</input>", "")
-        
+
         cmd = cmd.replace("> ", "") if ln > 1 else cmd
-        
+
         if cmd and cmd[-1] == '\\' or add_more:
             return None, None
-        
+
         self._commands_list.append(cmd_copy)
 
         return cmd, _input
@@ -197,7 +198,7 @@ class _TerminalFunctionality:
         Event callback on any keybroad key press."""
         insert_idx = self.index('insert')
 
-        if (self._ignore_keypress(evt) # Avoid typing on basename and spacer
+        if (self._ignore_keypress(evt)  # Avoid typing on basename and spacer
                     or ((insert_idx.column <= self._limit_backspace or False)
                         and evt.keysym == 'Left')  # Avoid to get on basename and spacer
                     # or (evt.keysym in AVOID_KEYSYM) # break if keysym not allowed
@@ -205,7 +206,7 @@ class _TerminalFunctionality:
                         and insert_idx.row != self.index('end-1l').row)
                     or (evt.state == 8 and evt.keysym == 'v'
                         and insert_idx.row != self.index('end-1l').row)  # Allowing pasting
-            ):
+                ):
             return "break"
 
     def _on_backspace(self, evt=None):
@@ -281,9 +282,10 @@ class _TerminalFunctionality:
         while self.get(
                 str(last_line_start.row) + '.0',
                 str(last_line_start.row) + f'.{len(self._basename)}'
-                ) != self._basename:
+        ) != self._basename:
             line_count += 1
             last_line_start = TextIndex(self.index(f"end-{line_count}l"))
+
         last_line_start = TextIndex(
             str(last_line_start.line) + '.' + str(len(self._basename))
         )
