@@ -30,6 +30,22 @@ MS_DELAY = 1
 class _TerminalFunctionality:
     """Internal class for Terminal widget."""
 
+    @property
+    def _limit_backspace(self):
+        """Internal property, returns the 
+        length for spaces allowed at insert line."""
+        insert_idx = self.index("insert")
+        get_initial = lambda char: self.get(
+            str(insert_idx.row) + '.0', 
+            str(insert_idx.row) + f'.{char}'
+            )
+
+        if get_initial(2) == "> ":
+            return 2
+        
+        if get_initial(len(self._basename)) == self._basename:
+            return len(self._basename)
+
     def _set_basename(self, insert_newline=False):
         """Internal function"""
         if (self.get('end-2c') == '\\'
@@ -41,7 +57,6 @@ class _TerminalFunctionality:
         self.insert('end', self._basename)
         self.tag_add('basename', 'end-1l', 'end-2c')
         self.see('end')
-        self._limit_backspace = len(self._basename)
         self.linebar.trigger_change_event()
 
     def _get_commands(self, _cmd=None, _input=None):
@@ -59,25 +74,31 @@ class _TerminalFunctionality:
 
         ln = 1
         cmd = _cmd or self.get(initial_index(ln), 'end-1c')
+        add_more = self.get('end-1l', 'end-1c') == '> '
 
         if cmd.strip() == '':
             return None, None
 
-        self._commands_list.append(cmd)
-
         if _input is not None:
             return cmd, _input
 
-        add_more = self.get('end-1l', 'end-1c') == '> '
         while cmd[:2] == '> ':
             ln += 1
             cmd = self.get(initial_index(ln), 'end-1c')
+        
+        cmd_copy = cmd
+
         if cmd.find("<input>") != -1:
             _input = cmd.split('<input>')[-1].split('</input>')[0]
             cmd = cmd.replace(f"<input>{_input}</input>", "")
+        
         cmd = cmd.replace("> ", "") if ln > 1 else cmd
+        
         if cmd and cmd[-1] == '\\' or add_more:
             return None, None
+        
+        self._commands_list.append(cmd_copy)
+
         return cmd, _input
 
     def _update_output_line(self, tag, line, update=False):
@@ -154,18 +175,12 @@ class _TerminalFunctionality:
             index = "end-1c" if self.get('end-2c') == '\\' else "end"
             self.insert(index, '\n')
             self.insert('end', '> ')
-            self._limit_backspace = 2
-            return False
-        if not self._get_commands()[0]:
-            self._limit_backspace = len(self._basename)
-            return True
 
     def _ignore_keypress(self, evt=None):
         """Internal function"""
         insert_idx = self.index('insert')
 
-        if (insert_idx.column < self._limit_backspace
-                or 'basename' in self.tag_names(insert_idx)):
+        if ('basename' in self.tag_names(insert_idx)):
             return "break"
 
     def _on_return(self, evt=None):
@@ -182,10 +197,10 @@ class _TerminalFunctionality:
         Event callback on any keybroad key press."""
         insert_idx = self.index('insert')
 
-        if (self._ignore_keypress(evt)  # Avoid typing on basename and spacer
-            or (insert_idx.column <= self._limit_backspace
+        if (self._ignore_keypress(evt) # Avoid typing on basename and spacer
+                    or ((insert_idx.column <= self._limit_backspace or False)
                         and evt.keysym == 'Left')  # Avoid to get on basename and spacer
-            # or (evt.keysym in AVOID_KEYSYM) # break if keysym not allowed
+                    # or (evt.keysym in AVOID_KEYSYM) # break if keysym not allowed
                     or (evt.keysym not in ALLOWED_KEYSYM
                         and insert_idx.row != self.index('end-1l').row)
                     or (evt.state == 8 and evt.keysym == 'v'
@@ -261,16 +276,23 @@ class _TerminalFunctionality:
         elif not self._commands_list:
             return "break"
 
-        # clears the last line
         last_line_start = TextIndex(self.index("end-1l"))
+        line_count = 1
+        while self.get(
+                str(last_line_start.row) + '.0',
+                str(last_line_start.row) + f'.{len(self._basename)}'
+                ) != self._basename:
+            line_count += 1
+            last_line_start = TextIndex(self.index(f"end-{line_count}l"))
         last_line_start = TextIndex(
-            str(last_line_start.line) + '.' + str(len(self.basename) + 1)
+            str(last_line_start.line) + '.' + str(len(self._basename))
         )
         last_line_end = TextIndex(self.index("end"))
-
+        # clears the last line
         self.delete(last_line_start, last_line_end)
         if self._prev_cmd_pointer != 0:
             self.insert('end', self._commands_list[self._prev_cmd_pointer])
+            self.see('end')
 
         return "break"
 
@@ -315,7 +337,6 @@ class Terminal(Text, _TerminalFunctionality):
 
         self._cwd = os.getcwd()
         self._basename = ''
-        self._limit_backspace = len(self._basename)
         self._commands_list = []
 
         self.shell = False
