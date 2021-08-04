@@ -35,14 +35,14 @@ class TextIndex(str):
         """Get row from index."""
         if self._row is not None:
             return int(self._row)
-    line = row
+    r = line = row
 
     @property
     def column(self):
         """Get column from index."""
         if self._col is not None:
             return int(self._col)
-    char = column
+    c = char = col = column
 
     def __str__(self):
         return str(self._index)
