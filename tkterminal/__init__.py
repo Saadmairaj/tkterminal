@@ -12,7 +12,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-"""This library give Terminal widget support to Tkinter library. 
+"""This library gives Terminal widget support to the Tkinter library. 
 Perform almost all the operations of a terminal with tkterminal.
 """
 from tkterminal.ternimal import Terminal
