@@ -310,10 +310,10 @@ class _TerminalFunctionality:
 
 
 class Terminal(Text, _TerminalFunctionality):
-    """Ternimal widget."""
+    """Terminal widget."""
 
     def __init__(self, *ags, **kw):
-        """Construct a ternimal widget with the parent MASTER.
+        """Construct a terminal widget with the parent MASTER.
 
         STANDARD OPTIONS
 

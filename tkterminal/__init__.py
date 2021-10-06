@@ -15,4 +15,4 @@
 """This library gives Terminal widget support to the Tkinter library. 
 Perform almost all the operations of a terminal with tkterminal.
 """
-from tkterminal.ternimal import Terminal
+from tkterminal.terminal import Terminal
