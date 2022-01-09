@@ -173,3 +173,6 @@ Terminal widget is created from the Tkinter Text widget class that makes it supp
   - All error text also have a tag name _error_ which can be configured with `terminal.tag_config("error", option=value...)` method.
   - The basename also have a tag name _basename_ configured with `terminal.tag_config("basename", option=value...)` method.
   - The linebar is an object of Tkinter Canvas widget which can be configured with `terminal.linebar.configure(option=value ...)`. And each number line is a canvas item whose tag name is the number itself that can be configured with `terminal.linebar.itemconfigure('item', options...)`.
+ 
+ 
+## [License](https://github.com/Saadmairaj/tkterminal/blob/master/LICENSE)
