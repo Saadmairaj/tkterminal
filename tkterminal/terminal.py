@@ -357,7 +357,7 @@ class Terminal(Text, _TerminalFunctionality):
         self.bind('<Button-3>', self._on_click, True)
         self.bind('<ButtonRelease-3>', self._on_click_release, True)
 
-        self.bind('<Command-k>', self._clear, True)
+        self.bind('<Control-k>', self._clear, True)
         self.bind('<Control-c>', self._cancel, True)
 
         self.tag_config('basename', foreground='pink')
