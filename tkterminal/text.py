@@ -128,6 +128,7 @@ class LineNumberBar(tk.Canvas):
                 self.itemconfigure(
                     self.previous_ln, fill=self._text['foreground'])
             self.itemconfigure(ln, fill=self._text['selectbackground'])
+            self.itemconfigure(ln, fill=self._text['selectforeground'])
             self._text.tag_remove('sel', '1.0', 'end')
             line = int(line.split('.')[0])
             self._text.tag_add('sel', str(float(line)), str(float(line+1)))
